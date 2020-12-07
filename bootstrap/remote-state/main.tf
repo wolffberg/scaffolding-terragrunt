@@ -46,10 +46,8 @@ data "aws_iam_policy_document" "assume" {
     ]
 
     principals {
-      type = "AWS"
-      identifiers = [
-        "*"
-      ]
+      type        = "AWS"
+      identifiers = var.trusted_identities
     }
   }
 }
