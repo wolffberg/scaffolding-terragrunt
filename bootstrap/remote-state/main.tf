@@ -9,6 +9,11 @@ terraform {
 
 provider "aws" {}
 
+locals {
+  # Try to convert repository name with hyphens into CamcelCase
+  camelcase_role_name = try(replace(title(replace(var.repository_name, "-", " ")), " ", ""), var.repository_name)
+}
+
 resource "aws_s3_bucket" "this" {
   bucket = "${var.repository_name}-remote-state"
   acl    = "private"
@@ -19,8 +24,8 @@ resource "aws_s3_bucket" "this" {
 }
 
 resource "aws_dynamodb_table" "this" {
-  name     = "${var.repository_name}-remote-state"
-  hash_key = "LockID"
+  name           = "${var.repository_name}-remote-state"
+  hash_key       = "LockID"
   read_capacity  = 5
   write_capacity = 5
 
@@ -34,7 +39,22 @@ resource "aws_dynamodb_table" "this" {
   }
 }
 
-data "aws_iam_policy_document" "this" {
+data "aws_iam_policy_document" "assume" {
+  statement {
+    actions = [
+      "sts:AssumeRole"
+    ]
+
+    principals {
+      type = "AWS"
+      identifiers = [
+        "*"
+      ]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "tfstate" {
   statement {
     sid = "S3ListBucket"
 
@@ -75,7 +95,18 @@ data "aws_iam_policy_document" "this" {
 }
 
 resource "aws_iam_policy" "this" {
-  name   = "${var.repository_name}RemoteStateReadWrite"
-  path   = "/${var.repository_name}/"
-  policy = data.aws_iam_policy_document.this.json
+  name   = "${local.camelcase_role_name}RemoteStateReadWrite"
+  path   = "/${local.camelcase_role_name}/"
+  policy = data.aws_iam_policy_document.tfstate.json
+}
+
+resource "aws_iam_role" "this" {
+  name               = "${local.camelcase_role_name}RemoteStateReadWrite"
+  path               = "/${local.camelcase_role_name}/"
+  assume_role_policy = data.aws_iam_policy_document.assume.json
+}
+
+resource "aws_iam_role_policy_attachment" "this" {
+  role       = aws_iam_role.this.id
+  policy_arn = aws_iam_policy.this.arn
 }

@@ -6,6 +6,6 @@ output "dynamodb_table_id" {
   value = aws_dynamodb_table.this.id
 }
 
-output "iam_policy_arn" {
-  value = aws_iam_policy.this.arn
+output "iam_role_arn" {
+  value = aws_iam_role.this.arn
 }
