@@ -58,6 +58,7 @@ data "aws_iam_policy_document" "tfstate" {
 
     actions = [
       "s3:ListBucket",
+      "s3:GetBucketVersioning"
     ]
 
     resources = [
@@ -81,6 +82,7 @@ data "aws_iam_policy_document" "tfstate" {
     sid = "DynamoDBReadWrite"
 
     actions = [
+      "dynamodb:DescribeTable",
       "dynamodb:GetItem",
       "dynamodb:PutItem",
       "dynamodb:DeleteItem"
