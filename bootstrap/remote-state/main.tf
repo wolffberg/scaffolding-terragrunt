@@ -18,6 +18,10 @@ resource "aws_s3_bucket" "this" {
   bucket = "${var.repository_name}-remote-state"
   acl    = "private"
 
+  versioning {
+    enabled = true
+  }
+
   tags = {
     Name = var.repository_name
   }
