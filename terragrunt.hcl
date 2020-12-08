@@ -20,9 +20,6 @@ locals {
   # Extract the variables we need for easy access
   aws_account_id = local.account_id.locals.account_id
   aws_region     = local.region.locals.region
-
-  # Extract the current Terragrunt values to use when merging common inputs
-  current_terragrunt = "${path_relative_from_include()}/terragrunt.hcl"
 }
 
 # Generate an AWS provider block
@@ -59,9 +56,10 @@ remote_state {
   }
 }
 
-# Add inputs to all child modules. 
+# Tags added to un-tagged resources.
 inputs = {
-  tags = merge(
-    { terragrunt_config = "${local.repository_name}/${path_relative_to_include()}" }
-  )
+  tags = {
+    # { terragrunt-config = repository-name/path/to/terragrunt-file }
+    terragrunt-config = "${local.repository_name}/${path_relative_to_include()}"
+  }
 }
