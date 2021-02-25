@@ -1,3 +1,3 @@
 locals {
-  account_id = "917611967201"
+  account_id = "123456789012"
 }
