@@ -7,8 +7,6 @@ terraform {
   }
 }
 
-provider "aws" {}
-
 locals {
   # Try to convert repository name with hyphens into CamcelCase
   camelcase_role_name = try(replace(title(replace(var.repository_name, "-", " ")), " ", ""), var.repository_name)
@@ -27,11 +25,24 @@ resource "aws_s3_bucket" "this" {
   }
 }
 
+resource "aws_s3_bucket_public_access_block" "this" {
+  bucket = aws_s3_bucket.this.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
 resource "aws_dynamodb_table" "this" {
   name           = "${var.repository_name}-remote-state"
   hash_key       = "LockID"
   read_capacity  = 5
   write_capacity = 5
+
+  server_side_encryption {
+    enabled = true
+  }
 
   attribute {
     name = "LockID"
@@ -62,7 +73,8 @@ data "aws_iam_policy_document" "tfstate" {
 
     actions = [
       "s3:ListBucket",
-      "s3:GetBucketVersioning"
+      "s3:GetBucketVersioning",
+      "s3:GetBucketPublicAccessBlock"
     ]
 
     resources = [
